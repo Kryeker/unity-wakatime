@@ -143,6 +143,10 @@ namespace WakaTime {
 
       var request = UnityWebRequest.Post(URL_PREFIX + "users/current/heartbeats?api_key=" + _apiKey, string.Empty);
       request.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(heartbeatJSON));
+
+      request.disposeUploadHandlerOnDispose = true;  // rostok based https://forum.unity.com/threads/a-native-collection-has-not-been-disposed-resulting-in-a-memory-leak.1136068/
+      request.disposeDownloadHandlerOnDispose = true;  // rostok
+                  
       request.SetRequestHeader("Content-Type", "application/json");
 
       request.SendWebRequest().completed +=
@@ -150,6 +154,7 @@ namespace WakaTime {
           if (request.downloadHandler.text == string.Empty) {
             Debug.LogWarning(
               "<WakaTime> Network is unreachable. Consider disabling completely if you're working offline");
+            request.Dispose(); // rostok
             return;
           }
 
@@ -173,6 +178,7 @@ namespace WakaTime {
             if (_debug) Debug.Log("<WakaTime> Sent heartbeat!");
             _lastHeartbeat = response.data;
           }
+          request.Dispose(); // rostok
         };
     }
 
