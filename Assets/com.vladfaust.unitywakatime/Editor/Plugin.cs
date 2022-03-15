@@ -1,7 +1,6 @@
-#
-if (UNITY_EDITOR)
+#if (UNITY_EDITOR)
 
-  using System;
+using System;
 using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -15,28 +14,19 @@ using UnityEditor.SceneManagement;
 namespace WakaTime {
   [InitializeOnLoad]
   public class Plugin {
-    public
-    const string API_KEY_PREF = "WakaTime/APIKey";
-    public
-    const string ENABLED_PREF = "WakaTime/Enabled";
-    public
-    const string DEBUG_PREF = "WakaTime/Debug";
-    public
-    const string WAKATIME_PROJECT_FILE = ".wakatime-project";
+    public const string API_KEY_PREF = "WakaTime/APIKey";
+    public const string ENABLED_PREF = "WakaTime/Enabled";
+    public const string DEBUG_PREF = "WakaTime/Debug";
+    public const string WAKATIME_PROJECT_FILE = ".wakatime-project";
 
-    public static string ProjectName {
-      get;
-      private set;
-    }
+    public static string ProjectName { get; private set; }
 
     private static string _apiKey = "";
     private static bool _enabled = true;
     private static bool _debug = true;
 
-    private
-    const string URL_PREFIX = "https://api.wakatime.com/api/v1/";
-    private
-    const int HEARTBEAT_COOLDOWN = 120;
+    private const string URL_PREFIX = "https://api.wakatime.com/api/v1/";
+    private const int HEARTBEAT_COOLDOWN = 120;
 
     private static HeartbeatResponse _lastHeartbeat;
 
@@ -97,7 +87,7 @@ namespace WakaTime {
     }
 
     [Serializable]
-    struct Response < T > {
+    struct Response<T> {
       public string error;
       public T data;
     }
@@ -138,9 +128,9 @@ namespace WakaTime {
       if (_debug) Debug.Log("<WakaTime> Sending heartbeat...");
 
       var currentScene = EditorSceneManager.GetActiveScene().path;
-      var file = currentScene != string.Empty ?
-        Application.dataPath + "/" + currentScene.Substring("Assets/".Length) :
-        string.Empty;
+      var file = currentScene != string.Empty
+        ? Application.dataPath + "/" + currentScene.Substring("Assets/".Length)
+        : string.Empty;
 
       var heartbeat = new Heartbeat(file, fromSave);
       if ((heartbeat.time - _lastHeartbeat.time < HEARTBEAT_COOLDOWN) && !fromSave &&
@@ -153,17 +143,18 @@ namespace WakaTime {
 
       // rostok using as suggested https://docs.unity3d.com/ScriptReference/Networking.UnityWebRequest.Dispose.html
       using(var request = UnityWebRequest.Post(URL_PREFIX + "users/current/heartbeats?api_key=" + _apiKey, string.Empty)) {
-        request.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(heartbeatJSON));
+          request.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(heartbeatJSON));
 
-        request.disposeUploadHandlerOnDispose = true; // rostok based https://forum.unity.com/threads/a-native-collection-has-not-been-disposed-resulting-in-a-memory-leak.1136068/
-        request.disposeDownloadHandlerOnDispose = true; // rostok
+          request.disposeUploadHandlerOnDispose = true;  // rostok based https://forum.unity.com/threads/a-native-collection-has-not-been-disposed-resulting-in-a-memory-leak.1136068/
+          request.disposeDownloadHandlerOnDispose = true;  // rostok
+                      
+          request.SetRequestHeader("Content-Type", "application/json");
 
-        request.SetRequestHeader("Content-Type", "application/json");
-
-        request.SendWebRequest().completed +=
-          operation => {
-            try {
-              if (request.downloadHandler == null) return;
+          request.SendWebRequest().completed +=
+            operation => {
+try
+{
+              if (request.downloadHandler==null) return;
 
               if (request.downloadHandler.text == string.Empty) {
                 Debug.LogWarning(
@@ -175,27 +166,31 @@ namespace WakaTime {
               if (_debug)
                 Debug.Log("<WakaTime> Got response\n" + request.downloadHandler.text);
               var response =
-                JsonUtility.FromJson < Response < HeartbeatResponse >> (
+                JsonUtility.FromJson<Response<HeartbeatResponse>>(
                   request.downloadHandler.text);
 
               if (response.error != null) {
                 if (response.error == "Duplicate") {
                   if (_debug) Debug.LogWarning("<WakaTime> Duplicate heartbeat");
-                } else {
+                }
+                else {
                   Debug.LogError(
                     "<WakaTime> Failed to send heartbeat to WakaTime!\n" +
                     response.error);
                 }
-              } else {
+              }
+              else {
                 if (_debug) Debug.Log("<WakaTime> Sent heartbeat!");
                 _lastHeartbeat = response.data;
               }
               request.Dispose(); // rostok
-            } catch (ArgumentNullException exc) {
-              // silence
-            }
-          };
-      }
+}
+catch (ArgumentNullException exc)
+{
+    // silence
+}              
+            };
+        }
     }
 
     [DidReloadScripts]
@@ -234,12 +229,12 @@ namespace WakaTime {
     static void LinkCallbacks(bool clean = false) {
       if (clean) {
         EditorApplication.playModeStateChanged -= OnPlaymodeStateChanged;
-        EditorApplication.contextualPropertyMenu -= OnPropertyContextMenu;#
-        if UNITY_2018_1_OR_NEWER
-        EditorApplication.hierarchyChanged -= OnHierarchyWindowChanged;#
-        else
-          EditorApplication.hierarchyWindowChanged -= OnHierarchyWindowChanged;#
-        endif
+        EditorApplication.contextualPropertyMenu -= OnPropertyContextMenu;
+        #if UNITY_2018_1_OR_NEWER
+          EditorApplication.hierarchyChanged -= OnHierarchyWindowChanged;
+        #else
+          EditorApplication.hierarchyWindowChanged -= OnHierarchyWindowChanged;
+        #endif
         EditorSceneManager.sceneSaved -= OnSceneSaved;
         EditorSceneManager.sceneOpened -= OnSceneOpened;
         EditorSceneManager.sceneClosing -= OnSceneClosing;
@@ -247,12 +242,12 @@ namespace WakaTime {
       }
 
       EditorApplication.playModeStateChanged += OnPlaymodeStateChanged;
-      EditorApplication.contextualPropertyMenu += OnPropertyContextMenu;#
-      if UNITY_2018_1_OR_NEWER
-      EditorApplication.hierarchyChanged += OnHierarchyWindowChanged;#
-      else
-        EditorApplication.hierarchyWindowChanged += OnHierarchyWindowChanged;#
-      endif
+      EditorApplication.contextualPropertyMenu += OnPropertyContextMenu;
+      #if UNITY_2018_1_OR_NEWER
+        EditorApplication.hierarchyChanged += OnHierarchyWindowChanged;
+      #else
+        EditorApplication.hierarchyWindowChanged += OnHierarchyWindowChanged;
+      #endif
       EditorSceneManager.sceneSaved += OnSceneSaved;
       EditorSceneManager.sceneOpened += OnSceneOpened;
       EditorSceneManager.sceneClosing += OnSceneClosing;
@@ -264,11 +259,10 @@ namespace WakaTime {
     /// </summary>
     /// <returns><see cref="Application.productName"/> or first line of .wakatime-project</returns>
     private static string GetProjectName() =>
-      File.Exists(WAKATIME_PROJECT_FILE) ?
-      File.ReadAllLines(WAKATIME_PROJECT_FILE)[0] :
-      Application.productName;
+      File.Exists(WAKATIME_PROJECT_FILE)
+        ? File.ReadAllLines(WAKATIME_PROJECT_FILE)[0]
+        : Application.productName;
   }
 }
 
-#
-endif
+#endif
