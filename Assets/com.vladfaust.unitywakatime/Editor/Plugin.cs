@@ -141,45 +141,47 @@ namespace WakaTime {
 
       var heartbeatJSON = JsonUtility.ToJson(heartbeat);
 
-      var request = UnityWebRequest.Post(URL_PREFIX + "users/current/heartbeats?api_key=" + _apiKey, string.Empty);
-      request.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(heartbeatJSON));
+      // rostok using as suggested https://docs.unity3d.com/ScriptReference/Networking.UnityWebRequest.Dispose.html
+      using(var request = UnityWebRequest.Post(URL_PREFIX + "users/current/heartbeats?api_key=" + _apiKey, string.Empty)) {
+          request.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(heartbeatJSON));
 
-      request.disposeUploadHandlerOnDispose = true;  // rostok based https://forum.unity.com/threads/a-native-collection-has-not-been-disposed-resulting-in-a-memory-leak.1136068/
-      request.disposeDownloadHandlerOnDispose = true;  // rostok
-                  
-      request.SetRequestHeader("Content-Type", "application/json");
+          request.disposeUploadHandlerOnDispose = true;  // rostok based https://forum.unity.com/threads/a-native-collection-has-not-been-disposed-resulting-in-a-memory-leak.1136068/
+          request.disposeDownloadHandlerOnDispose = true;  // rostok
+                      
+          request.SetRequestHeader("Content-Type", "application/json");
 
-      request.SendWebRequest().completed +=
-        operation => {
-          if (request.downloadHandler.text == string.Empty) {
-            Debug.LogWarning(
-              "<WakaTime> Network is unreachable. Consider disabling completely if you're working offline");
-            request.Dispose(); // rostok
-            return;
-          }
+          request.SendWebRequest().completed +=
+            operation => {
+              if (request.downloadHandler.text == string.Empty) {
+                Debug.LogWarning(
+                  "<WakaTime> Network is unreachable. Consider disabling completely if you're working offline");
+                request.Dispose(); // rostok
+                return;
+              }
 
-          if (_debug)
-            Debug.Log("<WakaTime> Got response\n" + request.downloadHandler.text);
-          var response =
-            JsonUtility.FromJson<Response<HeartbeatResponse>>(
-              request.downloadHandler.text);
+              if (_debug)
+                Debug.Log("<WakaTime> Got response\n" + request.downloadHandler.text);
+              var response =
+                JsonUtility.FromJson<Response<HeartbeatResponse>>(
+                  request.downloadHandler.text);
 
-          if (response.error != null) {
-            if (response.error == "Duplicate") {
-              if (_debug) Debug.LogWarning("<WakaTime> Duplicate heartbeat");
-            }
-            else {
-              Debug.LogError(
-                "<WakaTime> Failed to send heartbeat to WakaTime!\n" +
-                response.error);
-            }
-          }
-          else {
-            if (_debug) Debug.Log("<WakaTime> Sent heartbeat!");
-            _lastHeartbeat = response.data;
-          }
-          request.Dispose(); // rostok
-        };
+              if (response.error != null) {
+                if (response.error == "Duplicate") {
+                  if (_debug) Debug.LogWarning("<WakaTime> Duplicate heartbeat");
+                }
+                else {
+                  Debug.LogError(
+                    "<WakaTime> Failed to send heartbeat to WakaTime!\n" +
+                    response.error);
+                }
+              }
+              else {
+                if (_debug) Debug.Log("<WakaTime> Sent heartbeat!");
+                _lastHeartbeat = response.data;
+              }
+              request.Dispose(); // rostok
+            };
+        }
     }
 
     [DidReloadScripts]
