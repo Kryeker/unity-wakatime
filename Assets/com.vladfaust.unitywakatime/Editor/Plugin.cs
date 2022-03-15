@@ -152,8 +152,8 @@ namespace WakaTime {
 
           request.SendWebRequest().completed +=
             operation => {
-              if (!request.downloadHandler) return;
-              
+              if (request.downloadHandler==null) return;
+
               if (request.downloadHandler.text == string.Empty) {
                 Debug.LogWarning(
                   "<WakaTime> Network is unreachable. Consider disabling completely if you're working offline");
