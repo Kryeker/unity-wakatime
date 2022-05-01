@@ -1,3 +1,7 @@
+# Native Collection has not been disposed, resulting in a memory leak error
+to avoid the error SendRequest() in Plugin.cs must be patched with request.Dispose()
+more at https://forum.unity.com/threads/a-native-collection-has-not-been-disposed-resulting-in-a-memory-leak.1136068/
+
 # unity-wakatime
 
 A [WakaTime](https://wakatime.com) plugin for [Unity](https://unity.com).
